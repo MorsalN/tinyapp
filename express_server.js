@@ -27,15 +27,16 @@ app.get('/', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  const templateVars = { urls : urlDatabase };
+  const templateVars = { urls : urlDatabase }; //where is urls coming from?
   response.render('urls_index', templateVars);
 });
 
 app.post("/urls", (request, response) => {
   const shortStr = generateRandomString();
-  urlDatabase[shortStr] = request.body['longURL'];
+  urlDatabase[shortStr] = request.body['longURL']; //urlDatabase[shortStr]? 
+  console.log(urlDatabase[shortStr]);
   // console.log(request.body);  // Log the POST request body to the console
-  response.redirect(`/urls/${shortStr}`);         // Respond with 'Ok' (we will replace this)
+  response.redirect(`/urls/${shortStr}`); //goes to the url with the new shortURL
 });
 
 app.get('/urls/new', (request, response) => {
@@ -43,6 +44,7 @@ app.get('/urls/new', (request, response) => {
   response.render('urls_new');
 });
 
+//this comes after urls new or else it will go to this page first
 app.get("/urls/:shortURL", (request, response) => {
   const shortURL = request.params.shortURL;
   const templateVars = { shortURL: shortURL, longURL: `${urlDatabase[shortURL]}`};
@@ -56,9 +58,9 @@ app.get('/hello', (request, response) => {
 
 
 app.get("/u/:shortURL", (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL];
+  const longURL = urlDatabase[request.params.shortURL]; //request.params
   if (longURL) {
-    response.redirect(longURL);
+    response.status(307).redirect('http://' + longURL);
   } else {
     response.status(404).send("404 page not found");
   }
