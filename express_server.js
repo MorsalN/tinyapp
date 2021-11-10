@@ -111,7 +111,12 @@ app.post("/login", (request, response) => {
   const username = request.body.username;
   response.cookie('username', username);
   response.redirect(`/urls`);
+});
 
+//POST for logout
+app.post("/logout", (request, response) => {
+  response.clearCookie('username');
+  response.redirect(`/urls`);
 });
 
 //this shows what is being added to the urlDatabase as an object
