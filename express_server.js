@@ -10,7 +10,7 @@ app.use(cookieParser());
 //this is saying what engine to use (view) and to look at the ejs file in views
 app.set('view engine', 'ejs');
 
-//starter data
+//starter url data
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -118,6 +118,28 @@ app.post("/logout", (request, response) => {
   response.clearCookie('username');
   response.redirect(`/urls`);
 });
+
+//GET for register
+app.get("/register", (request, response) => {
+  response.render("urls_register");
+});
+
+//starter user data
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
+
+
 
 //this shows what is being added to the urlDatabase as an object
 app.get('/urls.json', (request, response) => {
