@@ -76,7 +76,7 @@ app.get("/u/:shortURL", (request, response) => {
   }
 });
 
-//POST
+//POST for deleting a URL
 app.post("/urls/:shortURL/delete", (request, response) => {
   console.log('urlDatabase before: ', urlDatabase);
   const shortURL = request.params.shortURL;
@@ -85,6 +85,15 @@ app.post("/urls/:shortURL/delete", (request, response) => {
   console.log('urlDatabase after: ', urlDatabase);
   response.redirect(`/urls`); //sending another get request 
 });
+
+//POST for updating a URL
+app.post("/urls/:id", (request, response) => {
+  const shortURL = request.params.id;
+  urlDatabase[shortURL] = request.body.longURL;
+  // console.log(request);
+  response.redirect(`/urls`); //sending another get request 
+});
+
 
 //this shows what is being added to the urlDatabase as an object
 app.get('/urls.json', (request, response) => {
