@@ -60,6 +60,7 @@ app.get('/urls/new', (request, response) => {
 app.get("/urls/:shortURL", (request, response) => {
   // console.log('request.params: ', request.params);
   const shortURL = request.params.shortURL;
+  console.log('shortURL: ',shortURL);
   //the key longURL will get the value of longURL by urlDatabase[shortURL]
   const templateVars = { shortURL: shortURL, longURL: `${urlDatabase[shortURL]}`};
   response.render("urls_show", templateVars);
@@ -73,6 +74,16 @@ app.get("/u/:shortURL", (request, response) => {
   } else {
     response.status(404).send("404 page not found");
   }
+});
+
+//POST
+app.post("/urls/:shortURL/delete", (request, response) => {
+  console.log('urlDatabase before: ', urlDatabase);
+  const shortURL = request.params.shortURL;
+  console.log('shortURL: ',shortURL);
+  delete urlDatabase[shortURL];
+  console.log('urlDatabase after: ', urlDatabase);
+  response.redirect(`/urls`); //sending another get request 
 });
 
 //this shows what is being added to the urlDatabase as an object
