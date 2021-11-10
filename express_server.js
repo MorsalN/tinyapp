@@ -140,6 +140,12 @@ const users = {
 
 //POST for register
 app.post("/register", (request, response) => {
+  const email = request.body.email;
+  const password = request.body.password;
+  const id = generateRandomString();
+  console.log('email: ', email);
+  console.log('password: ',password);
+  console.log('id: ', id);
 
   response.redirect(`/urls`);
 });
