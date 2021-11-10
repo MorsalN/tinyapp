@@ -34,7 +34,10 @@ app.get('/', (request, response) => {
 //GET 
 //urls is a key for the obj template vars 
 app.get('/urls', (request, response) => {
-  const templateVars = { urls : urlDatabase}; 
+  const templateVars = { 
+    urls : urlDatabase,
+    username: request.cookies["username"]
+  }; 
   response.render('urls_index', templateVars);
 });
 
@@ -53,8 +56,11 @@ app.post("/urls", (request, response) => {
 });
 
 app.get('/urls/new', (request, response) => {
+  const templateVars = { 
+    username: request.cookies["username"]
+  }; 
   console.log('url new');
-  response.render('urls_new');
+  response.render('urls_new', templateVars);
 });
 
 //this comes after urls new or else it will go to this page first
@@ -64,7 +70,10 @@ app.get("/urls/:shortURL", (request, response) => {
   const shortURL = request.params.shortURL;
   console.log('shortURL: ',shortURL);
   //the key longURL will get the value of longURL by urlDatabase[shortURL]
-  const templateVars = { shortURL: shortURL, longURL: `${urlDatabase[shortURL]}`};
+  const templateVars = { shortURL: shortURL, 
+    longURL: `${urlDatabase[shortURL]}`,
+    username: request.cookies["username"]
+  };
   response.render("urls_show", templateVars);
 });
 
@@ -101,6 +110,8 @@ app.post("/login", (request, response) => {
   console.log('request.body): ', request.body.username)
   const username = request.body.username;
   response.cookie('username', username);
+  response.redirect(`/urls`);
+
 });
 
 //this shows what is being added to the urlDatabase as an object
