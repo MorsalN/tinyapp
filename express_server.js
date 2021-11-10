@@ -138,6 +138,11 @@ const users = {
   }
 }
 
+//POST for register
+app.post("/register", (request, response) => {
+
+  response.redirect(`/urls`);
+});
 
 
 
