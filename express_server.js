@@ -1,9 +1,11 @@
 const bodyParser = require("body-parser");
 // const { response, request } = require('express');
 const express = require('express');
+var cookieParser = require('cookie-parser')
 const app = express();
 const PORT = 8080;
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
 
 //this is saying what engine to use (view) and to look at the ejs file in views
 app.set('view engine', 'ejs');
@@ -94,6 +96,12 @@ app.post("/urls/:id", (request, response) => {
   response.redirect(`/urls`); //sending another get request 
 });
 
+//POST for login
+app.post("/login", (request, response) => {
+  console.log('request.body): ', request.body.username)
+  const username = request.body.username;
+  response.cookie('username', username);
+});
 
 //this shows what is being added to the urlDatabase as an object
 app.get('/urls.json', (request, response) => {
