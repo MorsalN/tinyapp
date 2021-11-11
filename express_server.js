@@ -82,17 +82,34 @@ app.post("/urls", (request, response) => {
   console.log('after: ', urlDatabase);
   // console.log(urlDatabase[shortStr]);
   // console.log(request.body);  // Log the POST request body to the console
-  response.redirect(`/urls/${shortURL}`); //sending another get request 
-});
+  response.redirect(`/urls/${shortURL}`); //sending another get request
+ });
+ 
 
+//GET urls/new
 app.get('/urls/new', (request, response) => {
-  const templateVars = { 
-    user: users[request.cookies["user_id"]]
-  }; 
-  console.log('url new');
-  response.render('urls_new', templateVars);
+
+  if (!request.cookies["user_id"]) {
+    return response.status(403).send("403 Forbidden");
+  }
+  
+  const email = users[request.cookies["user_id"]].email;
+  console.log({email});
+  for (const userID in users) {
+    console.log({userID});
+    console.log(users[userID].email);
+    if (users[userID].email === email) {
+      console.log('checked email');
+      const templateVars = { 
+        user: users[request.cookies["user_id"]]
+      }; 
+      console.log('url new');
+      return response.render('urls_new', templateVars);
+    } 
+  }
 });
 
+//GET shortURL
 //this comes after urls new or else it will go to this page first
 //the : means getting the value of shortURL
 app.get("/urls/:shortURL", (request, response) => {
@@ -108,6 +125,7 @@ app.get("/urls/:shortURL", (request, response) => {
   response.render("urls_show", templateVars);
 });
 
+//GET shortURL
 //this endpoint will get you straight to the website
 app.get("/u/:shortURL", (request, response) => {
   const longURL = urlDatabase[request.params.shortURL]; //request.params
