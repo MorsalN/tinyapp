@@ -1,22 +1,29 @@
+//Requires
 const bodyParser = require("body-parser");
-// const { response, request } = require('express');
 const express = require('express');
-var cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser')
 const app = express();
 const PORT = 8080;
+
+//Use
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 
-//this is saying what engine to use (view) and to look at the ejs file in views
+//Set
+//What engine to use (View) and what extention files to look at
 app.set('view engine', 'ejs');
 
-//starter url data
+//1. request.body - this is coming from the Form Tag
+//2. request.params  - this comes from the route /test/:id - request.params.id
+//3. request.cookies - this is stored in the browser and we capture it with request and write it with response.
+
+//Starter URL Data
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
-//Starter user data
+//Starter user Data
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
@@ -40,53 +47,58 @@ function generateRandomString() {
  return result;
 }
 
-//Handle Registration Errors
+//Handle Registration Errors (If User Exists)
 function handleRegistration(email, response) {
   for (const userID in users) {
-    console.log('userId: ', userID);
+    console.log('userID: ', userID);
     if (users[userID].email === email) {
       return response.status(404).send("404 page not found");
     }
   }
 };
 
-//example of an endpoint
+//Home Endpoint
 app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
-//GET 
-//urls is a key for the obj template vars 
+
+/**
+ * GET /urls Endpoint
+ * URL is a key for the obj template vars
+ * user is equal to a specific user from the users database using a randomly generated id when registering
+ */
 app.get('/urls', (request, response) => {
-  console.log('request.cookies userid: ',request.cookies['user_id']);
+  console.log('request.cookies: ',request.cookies);
+  console.log('request.cookies[userid]: ',request.cookies['user_id']);
   const templateVars = { 
     urls : urlDatabase,
-    user: users[request.cookies["user_id"]] //complete user object with all the keys and values
-    // user: request.cookies["user_id"] //ended up showing "logged in as"
+    user: users[request.cookies["user_id"]]
   }; 
   response.render('urls_index', templateVars);
 });
-//
-//1. request.body - this is coming from the Form Tag
-//2. request.params  - this comes from the route /test/:id - request.params.id
-//3. request.cookies - this is stored in the browser and we capture it with request and write it with response.
 
-//POST the new shortURL
+
+/**
+ * POST /urls Endpoint for New shortURL
+ * Adding new key shortURL and making it equal to the value longURL
+ * user is equal to a specific user from the users database using a randomly generated id when registering
+ */
 app.post("/urls", (request, response) => {
   const shortURL = generateRandomString();
-  //request.body is an obj so we want to get the longURL key
   const longURL = request.body.longURL;
-  console.log('before: ', urlDatabase);
-  //adding a new key called shortURL and making it equal to the value longURL
+  // console.log('before: ', urlDatabase);
   urlDatabase[shortURL] = longURL;
-  console.log('after: ', urlDatabase);
-  // console.log(urlDatabase[shortStr]);
-  // console.log(request.body);  // Log the POST request body to the console
-  response.redirect(`/urls/${shortURL}`); //sending another get request
+  // console.log('after: ', urlDatabase);
+  response.redirect(`/urls/${shortURL}`);
  });
  
 
-//GET urls/new
+/**
+ * GET /urls/new Endpoint
+ * Forbidden to Create New URL if user doesn't exist
+ * If user exists in users databases allow them to Create New URL
+ */
 app.get('/urls/new', (request, response) => {
 
   if (!request.cookies["user_id"]) {
@@ -94,41 +106,42 @@ app.get('/urls/new', (request, response) => {
   }
   
   const email = users[request.cookies["user_id"]].email;
-  console.log({email});
   for (const userID in users) {
-    console.log({userID});
-    console.log(users[userID].email);
+
     if (users[userID].email === email) {
-      console.log('checked email');
       const templateVars = { 
-        user: users[request.cookies["user_id"]]
+        user: users[request.cookies["user_id"]] //???
       }; 
-      console.log('url new');
       return response.render('urls_new', templateVars);
     } 
   }
 });
 
-//GET shortURL
-//this comes after urls new or else it will go to this page first
-//the : means getting the value of shortURL
+
+/**
+ * GET /urls/:shortURL Endpoint
+ * : means getting the value of shortURL
+ * Key longURL will get the value of longURL by urlDatabase[shortURL]
+ */
 app.get("/urls/:shortURL", (request, response) => {
-  // console.log('request.params: ', request.params);
   const shortURL = request.params.shortURL;
   console.log('shortURL: ',shortURL);
-  //the key longURL will get the value of longURL by urlDatabase[shortURL]
-  const templateVars = { shortURL: shortURL, 
-    longURL: `${urlDatabase[shortURL]}`,
-    // username: request.cookies["username"]
+  const templateVars = { 
+    shortURL: shortURL, 
+    longURL: urlDatabase[shortURL],
     user: users[request.cookies["user_id"]]
   };
   response.render("urls_show", templateVars);
 });
 
-//GET shortURL
-//this endpoint will get you straight to the website
+
+/**
+ * GET /u/:shortURL Endpoint
+ * Endpoint brings you straight to the website
+ */
 app.get("/u/:shortURL", (request, response) => {
-  const longURL = urlDatabase[request.params.shortURL]; //request.params
+  const shortURL = request.params.shortURL;
+  const longURL = urlDatabase[shortURL];
   if (longURL) {
     response.status(307).redirect(longURL);
   } else {
@@ -136,25 +149,32 @@ app.get("/u/:shortURL", (request, response) => {
   }
 });
 
-//POST for deleting a URL
+/**
+ * POST /urls/:shortURL/delete Endpoint
+ * Deletes website from urlDatabase
+ */
 app.post("/urls/:shortURL/delete", (request, response) => {
-  console.log('urlDatabase before: ', urlDatabase);
+  // console.log('urlDatabase before: ', urlDatabase);
   const shortURL = request.params.shortURL;
-  console.log('shortURL: ',shortURL);
   delete urlDatabase[shortURL];
-  console.log('urlDatabase after: ', urlDatabase);
-  response.redirect(`/urls`); //sending another get request 
+  // console.log('urlDatabase after: ', urlDatabase);
+  response.redirect(`/urls`);
 });
 
-//POST for updating a URL
+
+/**
+ * POST /urls/:id Endpoint
+ * Updating a URL
+ */
 app.post("/urls/:id", (request, response) => {
   const shortURL = request.params.id;
   urlDatabase[shortURL] = request.body.longURL;
-  // console.log(request);
-  response.redirect(`/urls`); //sending another get request 
+  response.redirect(`/urls`);
 });
 
-//GET for login
+/**
+ * GET /login Endpoint
+ */
 app.get("/login", (request, response) => {
   const templateVars = { 
     // user: users[request.cookies["user_id"]]
@@ -163,7 +183,9 @@ app.get("/login", (request, response) => {
   response.render("login", templateVars);
 });
 
-//POST for login
+/**
+ * POST /login Endpoint
+ */
 app.post("/login", (request, response) => {
   console.log('request.body.email: ', request.body.email)
   const email = request.body.email;
@@ -182,13 +204,18 @@ app.post("/login", (request, response) => {
   return response.status(403).send("403 Forbidden");
 });
 
-//POST for logout
+
+/**
+ * POST /logut Endpoint
+ */
 app.post("/logout", (request, response) => {
   response.clearCookie("user_id");
   response.redirect(`/urls`);
 });
 
-//GET for register
+/**
+ * GET /register Endpoint
+ */
 app.get("/register", (request, response) => {
   const templateVars = { 
   user: users[request.cookies["user_id"]]
@@ -196,19 +223,20 @@ app.get("/register", (request, response) => {
   response.render("urls_register", templateVars);
 });
 
-//POST for register
+/**
+ * POST /register Endpoint
+ */
 app.post("/register", (request, response) => {
   const email = request.body.email;
   const password = request.body.password;
   const id = generateRandomString();
   console.log('email: ', email);
-  console.log('password: ',password);
+  console.log('password: ', password);
   console.log('id: ', id);
   if (email === '' || password === '') {
     return response.status(404).send("404 page not found");
   } 
   handleRegistration(email, response);
-//  console.log('users: ', users);
   users[id] = {
     id,
     email,
@@ -221,7 +249,7 @@ app.post("/register", (request, response) => {
 
 
 
-//this shows what is being added to the urlDatabase as an object
+//Shows what is being added to the urlDatabase as an object
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase)
 });
@@ -229,7 +257,6 @@ app.get('/urls.json', (request, response) => {
 app.get('/hello', (request, response) => {
   response.send('<html><body>Hello <b>World</b></body></html>\n');
 })
-
 
 app.listen(PORT, () => {
   console.log(`Example app listenting on port ${PORT}`);
