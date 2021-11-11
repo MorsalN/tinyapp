@@ -36,10 +36,14 @@ app.get('/', (request, response) => {
 app.get('/urls', (request, response) => {
   const templateVars = { 
     urls : urlDatabase,
-    username: request.cookies["username"]
+    user: users[request.cookies["user_id"]] //complete user object with all the keys and values
   }; 
   response.render('urls_index', templateVars);
 });
+//
+//1. request.body - this is coming from the Form Tag
+//2. request.params  - this comes from the route /test/:id - request.params.id
+//3. request.cookies - this is stored in the browser and we capture it with request and write it with response.
 
 //POST the new shortURL
 app.post("/urls", (request, response) => {
@@ -146,7 +150,13 @@ app.post("/register", (request, response) => {
   console.log('email: ', email);
   console.log('password: ',password);
   console.log('id: ', id);
-
+  users[id] = {
+    id,
+    email,
+    password
+  };
+  console.log('users: ', users[id]);
+  response.cookie('user_id', users[id].id);
   response.redirect(`/urls`);
 });
 
