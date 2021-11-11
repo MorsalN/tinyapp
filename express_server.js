@@ -16,6 +16,20 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+//starter user data
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+}
+
 //getting a random 6 character string for shortURL
 function generateRandomString() {
   let result = '';
@@ -44,9 +58,11 @@ app.get('/', (request, response) => {
 //GET 
 //urls is a key for the obj template vars 
 app.get('/urls', (request, response) => {
+  console.log('request.cookies userid: ',request.cookies['user_id']);
   const templateVars = { 
     urls : urlDatabase,
     user: users[request.cookies["user_id"]] //complete user object with all the keys and values
+    // user: request.cookies["user_id"] //ended up showing "logged in as"
   }; 
   response.render('urls_index', templateVars);
 });
@@ -122,7 +138,10 @@ app.post("/urls/:id", (request, response) => {
 
 //GET for login
 app.get("/login", (request, response) => {
-  response.render("login");
+  const templateVars = { 
+    user: users[request.cookies["user_id"]]
+  }; 
+  response.render("login", templateVars);
 });
 
 //POST for login
@@ -152,22 +171,11 @@ app.post("/logout", (request, response) => {
 
 //GET for register
 app.get("/register", (request, response) => {
-  response.render("urls_register");
+  const templateVars = { 
+  user: users[request.cookies["user_id"]]
+  }; 
+  response.render("urls_register", templateVars);
 });
-
-//starter user data
-const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
-}
 
 //POST for register
 app.post("/register", (request, response) => {
