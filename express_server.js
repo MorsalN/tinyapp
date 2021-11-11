@@ -120,12 +120,28 @@ app.post("/urls/:id", (request, response) => {
   response.redirect(`/urls`); //sending another get request 
 });
 
+//GET for login
+app.get("/login", (request, response) => {
+  response.render("login");
+});
+
 //POST for login
 app.post("/login", (request, response) => {
-  console.log('request.body): ', request.body.username)
-  const username = request.body.username;
-  response.cookie('username', username);
-  response.redirect(`/urls`);
+  console.log('request.body.email: ', request.body.email)
+  const email = request.body.email;
+  const password = request.body.password;
+
+  for (const userID in users) {
+    // console.log('userID email: ', users[userID].email);
+    
+    if (users[userID].email === email && users[userID].password === password) {
+      // console.log('checked email');
+      // console.log('checked password');
+      response.cookie('user_id', users[userID]);
+      response.redirect(`/urls`);
+    } 
+  }
+  return response.status(403).send("403 Forbidden");
 });
 
 //POST for logout
