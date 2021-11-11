@@ -16,21 +16,21 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-//starter user data
+//Starter user data
 const users = { 
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "123"
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: "123"
   }
 }
 
-//getting a random 6 character string for shortURL
+//Getting Random 6 Character String for shortURL
 function generateRandomString() {
   let result = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -139,7 +139,8 @@ app.post("/urls/:id", (request, response) => {
 //GET for login
 app.get("/login", (request, response) => {
   const templateVars = { 
-    user: users[request.cookies["user_id"]]
+    // user: users[request.cookies["user_id"]]
+    user: null
   }; 
   response.render("login", templateVars);
 });
@@ -156,7 +157,7 @@ app.post("/login", (request, response) => {
     if (users[userID].email === email && users[userID].password === password) {
       // console.log('checked email');
       // console.log('checked password');
-      response.cookie('user_id', users[userID]);
+      response.cookie('user_id', users[userID].id);
       response.redirect(`/urls`);
     } 
   }
