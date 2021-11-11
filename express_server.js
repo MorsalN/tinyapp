@@ -26,6 +26,16 @@ function generateRandomString() {
  return result;
 }
 
+//Handle Registration Errors
+function handleRegistration(email, response) {
+  for (const userID in users) {
+    console.log('userId: ', userID);
+    if (users[userID].email === email) {
+      return response.status(404).send("404 page not found");
+    }
+  }
+};
+
 //example of an endpoint
 app.get('/', (request, response) => {
   response.send('Hello!');
@@ -154,16 +164,8 @@ app.post("/register", (request, response) => {
   if (email === '' || password === '') {
     return response.status(404).send("404 page not found");
   } 
-
-  for (const userID in users) {
-    console.log('userId: ', userID);
-    if (users[userID].email === email) {
-      return response.status(404).send("404 page not found");
-    }
-  }
-
-  console.log('users: ', users);
-
+  handleRegistration(email, response);
+//  console.log('users: ', users);
   users[id] = {
     id,
     email,
