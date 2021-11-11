@@ -61,7 +61,7 @@ app.post("/urls", (request, response) => {
 
 app.get('/urls/new', (request, response) => {
   const templateVars = { 
-    username: request.cookies["username"]
+    user: users[request.cookies["user_id"]]
   }; 
   console.log('url new');
   response.render('urls_new', templateVars);
@@ -76,7 +76,8 @@ app.get("/urls/:shortURL", (request, response) => {
   //the key longURL will get the value of longURL by urlDatabase[shortURL]
   const templateVars = { shortURL: shortURL, 
     longURL: `${urlDatabase[shortURL]}`,
-    username: request.cookies["username"]
+    // username: request.cookies["username"]
+    user: users[request.cookies["user_id"]]
   };
   response.render("urls_show", templateVars);
 });
@@ -119,7 +120,7 @@ app.post("/login", (request, response) => {
 
 //POST for logout
 app.post("/logout", (request, response) => {
-  response.clearCookie('username');
+  response.clearCookie("user_id");
   response.redirect(`/urls`);
 });
 
@@ -150,12 +151,25 @@ app.post("/register", (request, response) => {
   console.log('email: ', email);
   console.log('password: ',password);
   console.log('id: ', id);
+  if (email === '' || password === '') {
+    return response.status(404).send("404 page not found");
+  } 
+
+  for (const userID in users) {
+    console.log('userId: ', userID);
+    if (users[userID].email === email) {
+      return response.status(404).send("404 page not found");
+    }
+  }
+
+  console.log('users: ', users);
+
   users[id] = {
     id,
     email,
     password
   };
-  console.log('users: ', users[id]);
+  console.log('users: ', users[id].email);
   response.cookie('user_id', users[id].id);
   response.redirect(`/urls`);
 });
