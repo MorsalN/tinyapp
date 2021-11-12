@@ -2,6 +2,7 @@
 const bodyParser = require("body-parser");
 const express = require('express');
 const cookieParser = require('cookie-parser')
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
 
@@ -292,14 +293,23 @@ app.post("/register", (request, response) => {
     return response.status(404).send("404 page not found");
   } 
   handleRegistration(email, response);
-  users[id] = {
-    id,
-    email,
-    password
-  };
-  console.log('users: ', users[id].email);
-  response.cookie('user_id', users[id].id);
-  response.redirect(`/urls`);
+
+  bcrypt.genSalt(10, (err, salt) => {
+    console.log('my salt: ', salt);
+    bcrypt.hash(password, salt, (error, hash) => {
+    console.log('my hash: ', hash);
+    users[id] = {
+      id,
+      email,
+      password: hash,
+    };
+    console.log('users: ', users[id].email);
+    response.cookie('user_id', users[id].id);
+    console.log('url database:', urlDatabase)
+    console.log('users:', users);
+    response.redirect(`/urls`);
+    })
+  })
 });
 
 
