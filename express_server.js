@@ -1,15 +1,20 @@
 //Requires
 const bodyParser = require("body-parser");
 const express = require('express');
-const cookieParser = require('cookie-parser')
+const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { request } = require("express");
+// const { request } = require("express");
 const app = express();
 const PORT = 8080;
 
 //Use
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2'],
+}))
 
 //Set
 //What engine to use (View) and what extention files to look at
@@ -96,18 +101,20 @@ app.get('/', (request, response) => {
  */
 app.get('/urls', (request, response) => {
 
-  if (!request.cookies["user_id"]) {
+  console.log('request session urls: ',request.session.userID);
+  if (!request.session.userID) {
     const templateVars = { 
       urls : urlDatabase,
-      user: users[request.cookies["user_id"]]
+      user: users[request.session.userID]
     }; 
     return response.render('must_login', templateVars);
   }
-  console.log('request.cookies: ',request.cookies);
-  console.log('request.cookies[userid]: ',request.cookies['user_id']);
+  // console.log('request.cookies: ',request.cookies);
+  // console.log('request.cookies[userid]: ',request.cookies['user_id']);
+
   const templateVars = { 
-    urls : urlsForUser(request.cookies["user_id"]),
-    user: users[request.cookies["user_id"]]
+    urls : urlsForUser(request.session.userID),
+    user: users[request.session.userID]
   }; 
   response.render('urls_index', templateVars);
 });
@@ -119,7 +126,9 @@ app.get('/urls', (request, response) => {
  */
 app.post("/urls", (request, response) => {
   const shortURL = generateRandomString();
-  const userObj = users[request.cookies["user_id"]]; //users
+
+
+  const userObj = users[request.session.userID]; //users
   const longURL = request.body.longURL;
   console.log('before: ', urlDatabase);
   urlDatabase[shortURL] = {};
@@ -137,16 +146,16 @@ app.post("/urls", (request, response) => {
  */
 app.get('/urls/new', (request, response) => {
 
-  if (!request.cookies["user_id"]) {
+  if (!request.session.userID) {
     return response.status(403).send("403 Forbidden");
   }
   
-  const email = users[request.cookies["user_id"]].email;
+  const email = users[request.session.userID].email;
   for (const userID in users) {
 
     if (users[userID].email === email) {
       const templateVars = { 
-        user: users[request.cookies["user_id"]] //???
+        user: users[request.session.userID] //???
       }; 
       return response.render('urls_new', templateVars);
     } 
@@ -165,7 +174,7 @@ app.get("/urls/:shortURL", (request, response) => {
   const templateVars = { 
     shortURL: shortURL, 
     longURL: urlDatabase[shortURL].longURL,
-    user: users[request.cookies["user_id"]]
+    user: users[request.session.userID]
   };
   response.render("urls_show", templateVars);
 });
@@ -195,7 +204,7 @@ app.post("/urls/:shortURL/delete", (request, response) => {
   const shortURL = request.params.shortURL;
   const shortURLObj = urlDatabase[shortURL];
 
-  if (shortURLObj.userID === request.cookies['user_id']) {
+  if (shortURLObj.userID === request.session.userID) {
     delete urlDatabase[shortURL];
     // console.log('urlDatabase after: ', urlDatabase);
     return response.redirect(`/urls`);
@@ -214,7 +223,7 @@ app.post("/urls/:id", (request, response) => {
 // console.log('id from browser', IDfromBrowser);
   const shortURL = request.params.id;
   const urlID = urlDatabase[shortURL].userID;
-  const IDfromBrowser = request.cookies['user_id'];
+  const IDfromBrowser = request.session.userID;
 
   if (urlID === IDfromBrowser) {
     const shortURL = request.params.id;
@@ -223,7 +232,7 @@ app.post("/urls/:id", (request, response) => {
   } else {
     const templateVars = { 
       urls : urlDatabase,
-      user: users[request.cookies["user_id"]]
+      user: users[request.session.userID]
     }; 
     return response.render('must_login', templateVars);
   }
@@ -259,8 +268,10 @@ app.post("/login", (request, response) => {
           }
           // console.log('checked email');
           console.log('checked password');
-          console.log('pass:', users[userID].password);
-          response.cookie('user_id', users[userID].id);
+          console.log('users[userID].id:', users[userID].id);
+
+          request.session.userID = users[userID].id;
+          // response.cookie('user_id', users[userID].id);
           response.redirect(`/urls`);
         })
       }
@@ -272,8 +283,9 @@ app.post("/login", (request, response) => {
  * POST /logut Endpoint
  */
 app.post("/logout", (request, response) => {
-  response.clearCookie("user_id");
-  response.redirect(`/urls`);
+  request.session = null;
+  // response.clearCookie("user_id");
+  response.redirect(`/login`);
 });
 
 /**
@@ -281,7 +293,7 @@ app.post("/logout", (request, response) => {
  */
 app.get("/register", (request, response) => {
   const templateVars = { 
-  user: users[request.cookies["user_id"]]
+  user: users[request.session.userID]
   }; 
   response.render("urls_register", templateVars);
 });
@@ -297,7 +309,7 @@ app.post("/register", (request, response) => {
   console.log('password: ', password);
   console.log('id: ', id);
   if (email === '' || password === '') {
-    return response.status(404).send("404 page not found");
+    return response.status(404).send("404 page not found - Missing Email or Password");
   } 
   handleRegistration(email, response);
 
@@ -311,7 +323,8 @@ app.post("/register", (request, response) => {
       password: hash,
     };
     console.log('users: ', users[id].email);
-    response.cookie('user_id', users[id].id);
+    request.session.userID = users[id].id;
+    // response.cookie('user_id', users[id].id);
     console.log('url database:', urlDatabase)
     console.log('users:', users);
     response.redirect(`/urls`);
