@@ -65,6 +65,19 @@ function generateRandomString() {
  return result;
 }
 
+//Helper function getUserByEmail
+
+const getUserByEmail = function(email, database) {
+  const values = Object.values(database);
+
+  for (const user of values) {
+    if(user.email === email) {
+      return user;
+    }
+  }
+      return null;
+}
+
 //Handle Registration Errors (If User Exists)
 function handleRegistration(email, response) {
   for (const userID in users) {
@@ -256,27 +269,40 @@ app.post("/login", (request, response) => {
   console.log('request.body.email: ', request.body.email)
   const email = request.body.email;
   const password = request.body.password;
+  const user = getUserByEmail(email, users);
 
-  for (const userID in users) {
-    // console.log('userID email: ', users[userID].email);
-    
-    if (users[userID].email === email) {
-      // if (users[userID].password === password) {
-        bcrypt.compare(password, users[userID].password, (err, success) => {
-          if (!success) {
-            return response.status(403).send("403 Forbidden");
-          }
-          // console.log('checked email');
-          console.log('checked password');
-          console.log('users[userID].id:', users[userID].id);
-
-          request.session.userID = users[userID].id;
-          // response.cookie('user_id', users[userID].id);
-          response.redirect(`/urls`);
-        })
-      }
-  }
+  if (user.email === email) {
+      bcrypt.compare(password, user.password, (err, success) => {
+        if (!success) {
+          return response.status(403).send("403 Forbidden - Please Check Credentials");
+        }
+        request.session.userID = user.id;
+        // response.cookie('user_id', users[userID].id);
+        response.redirect(`/urls`);
+      })
+    }
 });
+
+// for (const userID in users) {
+//   // console.log('userID email: ', users[userID].email);
+  
+//   if (users[userID].email === email) {
+//     // if (users[userID].password === password) {
+//       bcrypt.compare(password, users[userID].password, (err, success) => {
+//         if (!success) {
+//           return response.status(403).send("403 Forbidden");
+//         }
+//         // console.log('checked email');
+//         console.log('checked password');
+//         console.log('users[userID].id:', users[userID].id);
+
+//         request.session.userID = users[userID].id;
+//         // response.cookie('user_id', users[userID].id);
+//         response.redirect(`/urls`);
+//       })
+//     }
+// }
+// });
 
 
 /**
