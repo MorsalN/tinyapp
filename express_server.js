@@ -80,6 +80,15 @@ app.get('/', (request, response) => {
  * user is equal to a specific user from the users database using a randomly generated id when registering
  */
 app.get('/urls', (request, response) => {
+
+  if (!request.cookies["user_id"]) {
+    const templateVars = { 
+      urls : urlDatabase,
+      user: users[request.cookies["user_id"]]
+    }; 
+    return response.render('must_login', templateVars);
+  }
+
   console.log('request.cookies: ',request.cookies);
   console.log('request.cookies[userid]: ',request.cookies['user_id']);
   const templateVars = { 
