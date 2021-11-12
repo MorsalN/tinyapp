@@ -18,20 +18,31 @@ app.set('view engine', 'ejs');
 //3. request.cookies - this is stored in the browser and we capture it with request and write it with response.
 
 //Starter URL Data
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
-//Starter user Data
+//Starter User Data
 const users = { 
-  "userRandomID": {
-    id: "userRandomID", 
+  "aJ48lW": {
+    id: "aJ48lW", 
     email: "user@example.com", 
     password: "123"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
+  "2": {
+    id: "2", 
     email: "user2@example.com", 
     password: "123"
   }
@@ -82,14 +93,16 @@ app.get('/urls', (request, response) => {
 /**
  * POST /urls Endpoint for New shortURL
  * Adding new key shortURL and making it equal to the value longURL
- * user is equal to a specific user from the users database using a randomly generated id when registering
  */
 app.post("/urls", (request, response) => {
   const shortURL = generateRandomString();
+  const userObj = users[request.cookies["user_id"]]; //users
   const longURL = request.body.longURL;
-  // console.log('before: ', urlDatabase);
-  urlDatabase[shortURL] = longURL;
-  // console.log('after: ', urlDatabase);
+  console.log('before: ', urlDatabase);
+  urlDatabase[shortURL] = {};
+  urlDatabase[shortURL].longURL = longURL;
+  urlDatabase[shortURL].userID = userObj.id;
+  console.log('after: ', urlDatabase);
   response.redirect(`/urls/${shortURL}`);
  });
  
@@ -128,7 +141,7 @@ app.get("/urls/:shortURL", (request, response) => {
   console.log('shortURL: ',shortURL);
   const templateVars = { 
     shortURL: shortURL, 
-    longURL: urlDatabase[shortURL],
+    longURL: urlDatabase[shortURL].longURL,
     user: users[request.cookies["user_id"]]
   };
   response.render("urls_show", templateVars);
@@ -141,7 +154,7 @@ app.get("/urls/:shortURL", (request, response) => {
  */
 app.get("/u/:shortURL", (request, response) => {
   const shortURL = request.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   if (longURL) {
     response.status(307).redirect(longURL);
   } else {
@@ -168,8 +181,19 @@ app.post("/urls/:shortURL/delete", (request, response) => {
  */
 app.post("/urls/:id", (request, response) => {
   const shortURL = request.params.id;
-  urlDatabase[shortURL] = request.body.longURL;
-  response.redirect(`/urls`);
+  const urlID = urlDatabase[shortURL].userID;
+  const IDfromBrowser = request.cookies['user_id'];
+
+  console.log('urlID', urlID);
+  console.log('id from browser', IDfromBrowser);
+
+  if (urlID === IDfromBrowser) {
+    const shortURL = request.params.id;
+    urlDatabase[shortURL].longURL = request.body.longURL;
+    response.redirect(`/urls`);
+  } else {
+    return response.status(403).send("403 Forbidden");
+  }
 });
 
 /**
