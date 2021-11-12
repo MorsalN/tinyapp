@@ -88,11 +88,12 @@ app.get('/urls', (request, response) => {
     }; 
     return response.render('must_login', templateVars);
   }
+  
 
   console.log('request.cookies: ',request.cookies);
   console.log('request.cookies[userid]: ',request.cookies['user_id']);
   const templateVars = { 
-    urls : urlDatabase,
+    urls : urlsForUser(request.cookies["user_id"]),
     user: users[request.cookies["user_id"]]
   }; 
   response.render('urls_index', templateVars);
@@ -188,20 +189,38 @@ app.post("/urls/:shortURL/delete", (request, response) => {
  * POST /urls/:id Endpoint
  * Updating a URL
  */
+
+//Function for url for User
+const urlsForUser = function(id) {
+  const results = {};
+
+  const keys = Object.keys(urlDatabase);
+  for (const shortURL of keys) {
+    const url = urlDatabase[shortURL];
+    if(url.userID === id) {
+      results[shortURL] = url;
+    }
+  }
+  return results;
+}
+
 app.post("/urls/:id", (request, response) => {
+// console.log('urlID', urlID);
+// console.log('id from browser', IDfromBrowser);
   const shortURL = request.params.id;
   const urlID = urlDatabase[shortURL].userID;
   const IDfromBrowser = request.cookies['user_id'];
-
-  console.log('urlID', urlID);
-  console.log('id from browser', IDfromBrowser);
 
   if (urlID === IDfromBrowser) {
     const shortURL = request.params.id;
     urlDatabase[shortURL].longURL = request.body.longURL;
     response.redirect(`/urls`);
   } else {
-    return response.status(403).send("403 Forbidden");
+    const templateVars = { 
+      urls : urlDatabase,
+      user: users[request.cookies["user_id"]]
+    }; 
+    return response.render('must_login', templateVars);
   }
 });
 
