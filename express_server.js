@@ -68,6 +68,19 @@ function handleRegistration(email, response) {
   }
 };
 
+//Handle url for User
+const urlsForUser = function(id) {
+  const results = {};
+  const keys = Object.keys(urlDatabase);
+  for (const shortURL of keys) {
+    const url = urlDatabase[shortURL];
+    if(url.userID === id) {
+      results[shortURL] = url;
+    }
+  }
+  return results;
+}
+
 //Home Endpoint
 app.get('/', (request, response) => {
   response.send('Hello!');
@@ -88,8 +101,6 @@ app.get('/urls', (request, response) => {
     }; 
     return response.render('must_login', templateVars);
   }
-  
-
   console.log('request.cookies: ',request.cookies);
   console.log('request.cookies[userid]: ',request.cookies['user_id']);
   const templateVars = { 
@@ -172,16 +183,23 @@ app.get("/u/:shortURL", (request, response) => {
   }
 });
 
+
 /**
  * POST /urls/:shortURL/delete Endpoint
- * Deletes website from urlDatabase
+ * Deletes website from urlDatabase if permitted
  */
 app.post("/urls/:shortURL/delete", (request, response) => {
   // console.log('urlDatabase before: ', urlDatabase);
   const shortURL = request.params.shortURL;
-  delete urlDatabase[shortURL];
-  // console.log('urlDatabase after: ', urlDatabase);
-  response.redirect(`/urls`);
+  const shortURLObj = urlDatabase[shortURL];
+
+  if (shortURLObj.userID === request.cookies['user_id']) {
+    delete urlDatabase[shortURL];
+    // console.log('urlDatabase after: ', urlDatabase);
+    return response.redirect(`/urls`);
+  } else {
+    return response.status(403).send("403 Forbidden");
+  }
 });
 
 
@@ -189,21 +207,6 @@ app.post("/urls/:shortURL/delete", (request, response) => {
  * POST /urls/:id Endpoint
  * Updating a URL
  */
-
-//Function for url for User
-const urlsForUser = function(id) {
-  const results = {};
-
-  const keys = Object.keys(urlDatabase);
-  for (const shortURL of keys) {
-    const url = urlDatabase[shortURL];
-    if(url.userID === id) {
-      results[shortURL] = url;
-    }
-  }
-  return results;
-}
-
 app.post("/urls/:id", (request, response) => {
 // console.log('urlID', urlID);
 // console.log('id from browser', IDfromBrowser);
