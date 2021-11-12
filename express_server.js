@@ -4,6 +4,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const { getUserByEmail } = require('./helper');
 // const { request } = require("express");
 const app = express();
 const PORT = 8080;
@@ -65,18 +66,17 @@ function generateRandomString() {
  return result;
 }
 
-//Helper function getUserByEmail
+// //Helper function getUserByEmail
+// const getUserByEmail = function(email, database) {
+//   const values = Object.values(database);
 
-const getUserByEmail = function(email, database) {
-  const values = Object.values(database);
-
-  for (const user of values) {
-    if(user.email === email) {
-      return user;
-    }
-  }
-      return null;
-}
+//   for (const user of values) {
+//     if(user.email === email) {
+//       return user;
+//     }
+//   }
+//       return null;
+// }
 
 //Handle Registration Errors (If User Exists)
 function handleRegistration(email, response) {
