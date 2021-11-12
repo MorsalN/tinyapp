@@ -4,7 +4,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-const { getUserByEmail } = require('./helper');
+const { getUserByEmail, urlsForUser } = require('./helper');
 // const { request } = require("express");
 const app = express();
 const PORT = 8080;
@@ -66,18 +66,6 @@ function generateRandomString() {
  return result;
 }
 
-// //Helper function getUserByEmail
-// const getUserByEmail = function(email, database) {
-//   const values = Object.values(database);
-
-//   for (const user of values) {
-//     if(user.email === email) {
-//       return user;
-//     }
-//   }
-//       return null;
-// }
-
 //Handle Registration Errors (If User Exists)
 function handleRegistration(email, response) {
   for (const userID in users) {
@@ -88,18 +76,6 @@ function handleRegistration(email, response) {
   }
 };
 
-//Handle url for User
-const urlsForUser = function(id) {
-  const results = {};
-  const keys = Object.keys(urlDatabase);
-  for (const shortURL of keys) {
-    const url = urlDatabase[shortURL];
-    if(url.userID === id) {
-      results[shortURL] = url;
-    }
-  }
-  return results;
-}
 
 //Home Endpoint
 app.get('/', (request, response) => {
@@ -126,7 +102,7 @@ app.get('/urls', (request, response) => {
   // console.log('request.cookies[userid]: ',request.cookies['user_id']);
 
   const templateVars = { 
-    urls : urlsForUser(request.session.userID),
+    urls : urlsForUser(request.session.userID, urlDatabase),
     user: users[request.session.userID]
   }; 
   response.render('urls_index', templateVars);

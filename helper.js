@@ -10,4 +10,17 @@ const getUserByEmail = function(email, database) {
       return null;
 }
 
-module.exports = { getUserByEmail };
+//Handle url for User
+const urlsForUser = function(id, urlDatabase) {
+  const results = {};
+  const keys = Object.keys(urlDatabase);
+  for (const shortURL of keys) {
+    const url = urlDatabase[shortURL];
+    if(url.userID === id) {
+      results[shortURL] = url;
+    }
+  }
+  return results;
+}
+
+module.exports = { getUserByEmail, urlsForUser};
