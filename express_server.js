@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const express = require('express');
 const cookieParser = require('cookie-parser')
 const bcrypt = require('bcryptjs');
+const { request } = require("express");
 const app = express();
 const PORT = 8080;
 
@@ -250,14 +251,20 @@ app.post("/login", (request, response) => {
   for (const userID in users) {
     // console.log('userID email: ', users[userID].email);
     
-    if (users[userID].email === email && users[userID].password === password) {
-      // console.log('checked email');
-      // console.log('checked password');
-      response.cookie('user_id', users[userID].id);
-      response.redirect(`/urls`);
-    } 
+    if (users[userID].email === email) {
+      // if (users[userID].password === password) {
+        bcrypt.compare(password, users[userID].password, (err, success) => {
+          if (!success) {
+            return response.status(403).send("403 Forbidden");
+          }
+          // console.log('checked email');
+          console.log('checked password');
+          console.log('pass:', users[userID].password);
+          response.cookie('user_id', users[userID].id);
+          response.redirect(`/urls`);
+        })
+      }
   }
-  return response.status(403).send("403 Forbidden");
 });
 
 
@@ -294,7 +301,7 @@ app.post("/register", (request, response) => {
   } 
   handleRegistration(email, response);
 
-  bcrypt.genSalt(10, (err, salt) => {
+  const hashedPassword = bcrypt.genSalt(10, (err, salt) => {
     console.log('my salt: ', salt);
     bcrypt.hash(password, salt, (error, hash) => {
     console.log('my hash: ', hash);
@@ -310,7 +317,10 @@ app.post("/register", (request, response) => {
     response.redirect(`/urls`);
     })
   })
+
 });
+
+
 
 
 
