@@ -4,9 +4,10 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Final Product
 
-!["screenshot description"](/docs/edit.png)
-
-!["screenshot description"](#)
+!["Login Page"](https://github.com/MorsalN/tinyapp/blob/master/docs/login.png)
+!["Registration Page"](https://github.com/MorsalN/tinyapp/blob/master/docs/register.png)
+!["My URls page showing user's URLs where they can Edit and Delete"](https://github.com/MorsalN/tinyapp/blob/master/docs/urls.png)
+!["Allow logged in users to edit their URLs"](https://github.com/MorsalN/tinyapp/blob/master/docs/edit.png)
 
 ## Dependencies
 
