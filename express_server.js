@@ -76,11 +76,9 @@ function handleRegistration(email, response) {
   }
 };
 
-
 //Home Endpoint
 app.get('/', (request, response) => {
-  response.send('Hello!');
-});
+  response.redirect(`/urls`);});
 
 
 /**
@@ -97,9 +95,8 @@ app.get('/urls', (request, response) => {
       user: users[request.session.userID]
     }; 
     return response.render('must_login', templateVars);
+    // response.status(404).send("404 page not found");
   }
-  // console.log('request.cookies: ',request.cookies);
-  // console.log('request.cookies[userid]: ',request.cookies['user_id']);
 
   const templateVars = { 
     urls : urlsForUser(request.session.userID, urlDatabase),
@@ -115,8 +112,6 @@ app.get('/urls', (request, response) => {
  */
 app.post("/urls", (request, response) => {
   const shortURL = generateRandomString();
-
-
   const userObj = users[request.session.userID]; //users
   const longURL = request.body.longURL;
   console.log('before: ', urlDatabase);
@@ -136,7 +131,7 @@ app.post("/urls", (request, response) => {
 app.get('/urls/new', (request, response) => {
 
   if (!request.session.userID) {
-    return response.status(403).send("403 Forbidden");
+    return response.status(403).send("403 Forbidden - Please Register or Login");
   }
   
   const email = users[request.session.userID].email;
@@ -189,13 +184,11 @@ app.get("/u/:shortURL", (request, response) => {
  * Deletes website from urlDatabase if permitted
  */
 app.post("/urls/:shortURL/delete", (request, response) => {
-  // console.log('urlDatabase before: ', urlDatabase);
   const shortURL = request.params.shortURL;
   const shortURLObj = urlDatabase[shortURL];
 
   if (shortURLObj.userID === request.session.userID) {
     delete urlDatabase[shortURL];
-    // console.log('urlDatabase after: ', urlDatabase);
     return response.redirect(`/urls`);
   } else {
     return response.status(403).send("403 Forbidden");
@@ -208,8 +201,6 @@ app.post("/urls/:shortURL/delete", (request, response) => {
  * Updating a URL
  */
 app.post("/urls/:id", (request, response) => {
-// console.log('urlID', urlID);
-// console.log('id from browser', IDfromBrowser);
   const shortURL = request.params.id;
   const urlID = urlDatabase[shortURL].userID;
   const IDfromBrowser = request.session.userID;
@@ -224,6 +215,7 @@ app.post("/urls/:id", (request, response) => {
       user: users[request.session.userID]
     }; 
     return response.render('must_login', templateVars);
+    // response.status(404).send("404 page not found");
   }
 });
 
@@ -232,11 +224,11 @@ app.post("/urls/:id", (request, response) => {
  */
 app.get("/login", (request, response) => {
   const templateVars = { 
-    // user: users[request.cookies["user_id"]]
     user: null
   }; 
   response.render("login", templateVars);
 });
+
 
 /**
  * POST /login Endpoint
@@ -253,32 +245,10 @@ app.post("/login", (request, response) => {
           return response.status(403).send("403 Forbidden - Please Check Credentials");
         }
         request.session.userID = user.id;
-        // response.cookie('user_id', users[userID].id);
         response.redirect(`/urls`);
       })
     }
 });
-
-// for (const userID in users) {
-//   // console.log('userID email: ', users[userID].email);
-  
-//   if (users[userID].email === email) {
-//     // if (users[userID].password === password) {
-//       bcrypt.compare(password, users[userID].password, (err, success) => {
-//         if (!success) {
-//           return response.status(403).send("403 Forbidden");
-//         }
-//         // console.log('checked email');
-//         console.log('checked password');
-//         console.log('users[userID].id:', users[userID].id);
-
-//         request.session.userID = users[userID].id;
-//         // response.cookie('user_id', users[userID].id);
-//         response.redirect(`/urls`);
-//       })
-//     }
-// }
-// });
 
 
 /**
@@ -286,9 +256,9 @@ app.post("/login", (request, response) => {
  */
 app.post("/logout", (request, response) => {
   request.session = null;
-  // response.clearCookie("user_id");
-  response.redirect(`/login`);
+  response.redirect(`/urls`);
 });
+
 
 /**
  * GET /register Endpoint
@@ -299,6 +269,7 @@ app.get("/register", (request, response) => {
   }; 
   response.render("urls_register", templateVars);
 });
+
 
 /**
  * POST /register Endpoint
@@ -324,19 +295,12 @@ app.post("/register", (request, response) => {
       email,
       password: hash,
     };
-    console.log('users: ', users[id].email);
     request.session.userID = users[id].id;
-    // response.cookie('user_id', users[id].id);
-    console.log('url database:', urlDatabase)
-    console.log('users:', users);
     response.redirect(`/urls`);
     })
   })
 
 });
-
-
-
 
 
 //Shows what is being added to the urlDatabase as an object
@@ -351,20 +315,4 @@ app.get('/hello', (request, response) => {
 app.listen(PORT, () => {
   console.log(`Example app listenting on port ${PORT}`);
 });
-
-
-// app.get('/set', (request, response) => {
-//   const a = 1;
-//   response.send(`a = ${a}`);
-// });
-
-// app.get('/fetch', (request, response) => {
-//   response.send(`a = ${a}`);
-// });
-
-
-// app.get('/hello', (request, response) => {
-//   const templateVars = { greeting: 'Hello World!' };
-//   response.render('hello_world', templateVars);
-// });
 
