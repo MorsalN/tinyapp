@@ -146,6 +146,10 @@ app.post("/urls", (request, response) => {
   const shortURL = request.params.shortURL;
   const url = urlDatabase[shortURL];
 
+  if (url === undefined) {
+    return response.status(400).send("Invalid");
+  }
+
   if (url.userID !== userID) {
     return response.status(401).send("Must be logged in!");
   }
@@ -245,7 +249,7 @@ app.post("/login", (request, response) => {
   const user = getUserByEmail(email, users);
 
   if (!user) {
-    return response.status(403).send("403 Forbidden - Please Check Credentials");
+    return response.status(403).send("Please Check Credentials");
   }
 
   bcrypt.compare(password, user.password, (err, success) => {
