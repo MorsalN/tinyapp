@@ -66,15 +66,7 @@ function generateRandomString() {
  return result;
 }
 
-//Handle Registration Errors (If User Exists)
-function handleRegistration(email, response) {
-  for (const userID in users) {
-    console.log('userID: ', userID);
-    if (users[userID].email === email) {
-      return response.status(404).send("404 page not found");
-    }
-  }
-};
+
 
 //Home Endpoint
 app.get('/', (request, response) => {
@@ -88,14 +80,12 @@ app.get('/', (request, response) => {
  */
 app.get('/urls', (request, response) => {
 
-  console.log('request session urls: ',request.session.userID);
   if (!request.session.userID) {
     const templateVars = { 
       urls : urlDatabase,
       user: users[request.session.userID]
     }; 
-    return response.render('must_login', templateVars);
-    // response.status(404).send("404 page not found");
+    return response.redirect(`/login`);
   }
 
   const templateVars = { 
@@ -128,23 +118,21 @@ app.post("/urls", (request, response) => {
  * Forbidden to Create New URL if user doesn't exist
  * If user exists in users databases allow them to Create New URL
  */
-app.get('/urls/new', (request, response) => {
-
+ app.get('/urls/new', (request, response) => {
   if (!request.session.userID) {
-    return response.status(403).send("403 Forbidden - Please Register or Login");
+    return response.redirect(`/login`);
   }
-  
-  const email = users[request.session.userID].email;
-  for (const userID in users) {
+  const email = request.body.email;
+  // if (getUserByEmail(email, users) === email) {
+    const templateVars = { 
+      user: users[request.session.userID] 
+    // }; 
+  } 
+  return response.render('urls_new', templateVars);
 
-    if (users[userID].email === email) {
-      const templateVars = { 
-        user: users[request.session.userID] //???
-      }; 
-      return response.render('urls_new', templateVars);
-    } 
-  }
+  // return response.redirect(`/login`);
 });
+
 
 
 /**
@@ -152,13 +140,21 @@ app.get('/urls/new', (request, response) => {
  * : means getting the value of shortURL
  * Key longURL will get the value of longURL by urlDatabase[shortURL]
  */
-app.get("/urls/:shortURL", (request, response) => {
+ app.get("/urls/:shortURL", (request, response) => {
+  const userID = request.session.userID;
+  console.log('userID:', userID)
   const shortURL = request.params.shortURL;
+  const url = urlDatabase[shortURL];
+
+  if (url.userID !== userID) {
+    return response.status(401).send("Must be logged in!");
+  }
+
   console.log('shortURL: ',shortURL);
   const templateVars = { 
-    shortURL: shortURL, 
-    longURL: urlDatabase[shortURL].longURL,
-    user: users[request.session.userID]
+    shortURL, 
+    longURL: url.longURL,
+    user: users[userID]
   };
   response.render("urls_show", templateVars);
 });
@@ -170,12 +166,13 @@ app.get("/urls/:shortURL", (request, response) => {
  */
 app.get("/u/:shortURL", (request, response) => {
   const shortURL = request.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  if (longURL) {
-    response.status(307).redirect(longURL);
-  } else {
-    response.status(404).send("404 page not found");
-  }
+  const url = urlDatabase[shortURL];
+  if (!url) {
+    return response.status(404).send("404 page not found");
+  } 
+  
+  const longURL = url.longURL;
+  return response.redirect(longURL);
 });
 
 
@@ -201,6 +198,8 @@ app.post("/urls/:shortURL/delete", (request, response) => {
  * Updating a URL
  */
 app.post("/urls/:id", (request, response) => {
+
+
   const shortURL = request.params.id;
   const urlID = urlDatabase[shortURL].userID;
   const IDfromBrowser = request.session.userID;
@@ -223,6 +222,12 @@ app.post("/urls/:id", (request, response) => {
  * GET /login Endpoint
  */
 app.get("/login", (request, response) => {
+  const userID = request.session.userID;
+
+  // if (userID) {
+  //   response.redirect("/urls");
+  // }
+
   const templateVars = { 
     user: null
   }; 
@@ -239,15 +244,18 @@ app.post("/login", (request, response) => {
   const password = request.body.password;
   const user = getUserByEmail(email, users);
 
-  if (user.email === email) {
-      bcrypt.compare(password, user.password, (err, success) => {
-        if (!success) {
-          return response.status(403).send("403 Forbidden - Please Check Credentials");
-        }
-        request.session.userID = user.id;
-        response.redirect(`/urls`);
-      })
+  if (!user) {
+    return response.status(403).send("403 Forbidden - Please Check Credentials");
+  }
+
+  bcrypt.compare(password, user.password, (err, success) => {
+    if (!success) {
+      return response.status(403).send("403 Forbidden - Please Check Credentials");
     }
+
+    request.session.userID = user.id;
+    response.redirect(`/urls`);
+  })
 });
 
 
@@ -277,14 +285,22 @@ app.get("/register", (request, response) => {
 app.post("/register", (request, response) => {
   const email = request.body.email;
   const password = request.body.password;
-  const id = generateRandomString();
-  console.log('email: ', email);
-  console.log('password: ', password);
-  console.log('id: ', id);
   if (email === '' || password === '') {
-    return response.status(404).send("404 page not found - Missing Email or Password");
+    return response.status(404).send("Missing Email or Password");
   } 
-  handleRegistration(email, response);
+  
+  // const userID = request.session.userID;
+  // console.log('userID: ', userID);
+  // if (userID) {
+  //   return response.redirect(`/urls`);
+  // }
+
+  const user = getUserByEmail(email, users);
+  if (user) {
+    return response.status(404).send("Email exists, try another email or register");
+  }
+
+  const id = generateRandomString();
 
   const hashedPassword = bcrypt.genSalt(10, (err, salt) => {
     console.log('my salt: ', salt);
